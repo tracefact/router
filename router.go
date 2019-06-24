@@ -43,7 +43,6 @@ func HandleFunc(pattern string, handler http.HandlerFunc) {
 	handlers[pattern] = handler
 
 	p2 := transform(pattern)
-	fmt.Println("old:", pattern, "new:", p2)
 	http.HandleFunc(p2, filter)
 }
 
@@ -72,7 +71,7 @@ func match(pattern string, path string) bool {
 	}
 
 	for i, x := range patternArr {
-		fmt.Printf("hello pattern:[%v]%v, \tpath:[%v]", i, x, pathIndex)
+		fmt.Printf("pattern:[%v]%v, \tpath:[%v]", i, x, pathIndex)
 
 		if pathIndex >= pathLen {
 			// pattern还没结束，但是path已经结束了

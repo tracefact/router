@@ -30,10 +30,10 @@ func TestMatch(t *testing.T) {
 	// 	t.Errorf("ERROR! pattern: %v, path: %v\n", pattern, path)
 	// }
 
-	pattern = "/a/+/c"
-	path = "/a/b/c"
+	pattern = "/a/b/*"
+	path = "/a/b"
 	v = match(pattern, path)
-	if !v {
+	if v {
 		t.Errorf("ERROR! pattern: %v, path: %v\n", pattern, path)
 	}
 
