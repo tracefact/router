@@ -13,3 +13,6 @@ router.HandleFunc("/a/+/c", handler)
 
 // 匹配 /a/b/c、/a/b/d/e/c
 router.HandleFunc("/a/*/c", handler)
+```
+
+更多用法，可以参见 router_test.go
