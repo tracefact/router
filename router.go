@@ -47,7 +47,7 @@ func (x *myRouter) HandleFunc(pattern string, handler http.HandlerFunc) {
 	x.handlers[pattern] = handler
 }
 
-// 用户传进来的模式
+// 验证模式和路径是否匹配
 func match(pattern string, path string) bool {
 	if pattern == path {
 		return true
@@ -133,45 +133,6 @@ func match(pattern string, path string) bool {
 	}
 
 	return true
-}
-
-// 将形如 /a/b/+/c 的，转换为 /a/b/
-func transform(pattern string) string {
-	if pattern == "/" {
-		return pattern
-	}
-
-	plusIndex := strings.Index(pattern, "+")
-	starIndex := strings.Index(pattern, "*")
-
-	// 不存在模式，则直接退出
-	if plusIndex == -1 && starIndex == -1 {
-		return pattern
-	}
-
-	index := 0
-
-	// 取靠前面的作为起点
-	if plusIndex != -1 && starIndex == -1 {
-		index = plusIndex
-	}
-	if plusIndex == -1 && starIndex != -1 {
-		index = starIndex
-	}
-	if plusIndex != -1 && starIndex != -1 {
-		if plusIndex < starIndex {
-			index = plusIndex
-		} else {
-			index = starIndex
-		}
-	}
-
-	if index >= 0 {
-		slashIndex := strings.LastIndex(pattern[:index+1], "/")
-		pattern = pattern[:slashIndex+1]
-	}
-
-	return pattern
 }
 
 // 验证模式，不能出现 /+/* 或者 /*/+ ，或者 /*/*
