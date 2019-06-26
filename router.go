@@ -1,49 +1,50 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 )
 
-// 保存用户的 pattern 和 对应的handlerFunc
-var handlers = map[string]http.HandlerFunc{}
+// MyRouter 路由
+type myRouter struct {
+	// 保存用户的 pattern 和 对应的handlerFunc
+	handlers map[string]http.HandlerFunc
 
-// 保存用户pattern，主要是为了按顺序，因为map没有顺序
-var patterns = []string{}
+	// 保存用户pattern，主要是为了按顺序，因为map没有顺序
+	patterns []string
+}
 
-// HandleFunc 处理请求
-func HandleFunc(pattern string, handler http.HandlerFunc) {
+// DefaultRouter 路由
+var DefaultRouter = &myRouter{handlers: map[string]http.HandlerFunc{}, patterns: []string{}}
 
+// ServeHTTP
+func (x *myRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+
+	for _, k := range x.patterns {
+		if match(k, path) {
+			x.handlers[k](w, r)
+			return
+		}
+	}
+
+	// 全都不匹配则404
+	http.NotFound(w, r)
+}
+
+func (x *myRouter) HandleFunc(pattern string, handler http.HandlerFunc) {
 	if !checkPattern(pattern) {
 		panic("pattern格式有误，检查是否存在下面模式：/+/*、/*/+、/*/*，可使用/*代替")
 	}
 
-	var filter = func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-
-		for _, k := range patterns {
-			if match(k, path) {
-				handlers[k](w, r)
-				return
-			}
-		}
-
-		// 全都不匹配则404
-		http.NotFound(w, r)
-	}
-
-	if _, ok := handlers[pattern]; !ok {
+	if _, ok := x.handlers[pattern]; !ok {
 		// 如果不存在，在list中加一个
-		patterns = append(patterns, pattern)
+		x.patterns = append(x.patterns, pattern)
 	} else {
 		panic("URL模式 " + pattern + " 重复注册了！")
 	}
 
-	handlers[pattern] = handler
-
-	p2 := transform(pattern)
-	http.HandleFunc(p2, filter)
+	x.handlers[pattern] = handler
 }
 
 // 用户传进来的模式
@@ -71,14 +72,14 @@ func match(pattern string, path string) bool {
 	}
 
 	for i, x := range patternArr {
-		fmt.Printf("pattern:[%v]%v, \tpath:[%v]", i, x, pathIndex)
+		//fmt.Printf("pattern:[%v]%v, \tpath:[%v]", i, x, pathIndex)
 
 		if pathIndex >= pathLen {
 			// pattern还没结束，但是path已经结束了
-			fmt.Printf("nil \n")
+			//fmt.Printf("nil \n")
 			return false
 		}
-		fmt.Printf("%v \n", pathArr[pathIndex])
+		//fmt.Printf("%v \n", pathArr[pathIndex])
 
 		if x == pathArr[pathIndex] {
 			// 进入下一次循环，pathIndex才可以加
@@ -108,7 +109,7 @@ func match(pattern string, path string) bool {
 		}
 
 		if x == "*" {
-			// *出现在最后一个，则肯定满足
+			// *出现在最后一个，则认为其满足(即使 path最后一项为空 也认为满足)
 			if i == (patternLen - 1) {
 				return true
 			}
@@ -126,7 +127,7 @@ func match(pattern string, path string) bool {
 		return false
 	}
 
-	// arr2 没有匹配完，则肯定不满足
+	// path 没有匹配完，则肯定不满足
 	if pathIndex != (pathLen - 1) {
 		return false
 	}
